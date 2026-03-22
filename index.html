@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DBD Flashbang Timing Tool</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap');
+
+body {
+  background: #0d0d0d;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  padding: 40px;
+  transition: background 0.3s, color 0.3s;
+}
+body.light { background: #f0f0f0; color: #111; }
+
+h1 { font-family: 'Montserrat', sans-serif; font-size: 36px; margin-bottom: 20px; }
+
+.killer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px,1fr)); gap:50px; margin-bottom:20px; }
+
+.killer-card {
+  cursor: pointer;
+  border:2px solid transparent;
+  border-radius:7px;
+  overflow:hidden;
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  position:relative;
+}
+.killer-card:hover {
+  transform: scale(1.05);
+  border-color:#ff3b3b;
+  box-shadow:0 0 8px rgba(255,59,59,0.3);
+}
+.killer-card.favorite::after {
+  content:"★";
+  position:absolute; top:5px; right:5px;
+  color:gold; font-size:18px;
+}
+.killer-card.active {
+  animation: pulse 1s infinite;
+}
+.killer-card.bugged::before {
+  content:"";
+  position:absolute; top:0; left:0; width:100%; height:4px;
+  background-color:red;
+  border-top-left-radius:7px; border-top-right-radius:7px;
+}
+
+@keyframes pulse {
+  0%,100% { box-shadow:0 0 8px rgba(255,59,59,0.3); }
+  50% { box-shadow:0 0 12px rgba(255,59,59,0.5); }
+}
+
+.killer-card img { width:100%; border-radius:7px; display:block; }
+
+#topControls {
+  display:flex; flex-wrap:wrap; justify-content:center; gap:12px; margin-bottom:20px; align-items:center;
+}
+
+#videoContainerWrapper {
+  display:flex; justify-content:center; align-items:flex-start; gap:20px; margin-bottom:20px;
+}
+#videoContainer {
+  display:flex; flex-direction: column; align-items: center; width:90%; max-width:900px; gap:12px;
+}
+video { width:100%; border-radius:12px; box-shadow:0 0 10px rgba(255,255,255,0.2); display:block; }
+
+#bottomControls { display:flex; flex-wrap:wrap; justify-content:center; gap:12px; width:100%; }
+
+button, select, input[type=range] { min-width:100px; margin:4px; border-radius:6px; padding:6px; font-size:14px; }
+button { background:#ff3b3b; color:white; border:none; cursor:pointer; transition:background 0.2s; }
+button:hover { background:#ff5b5b; }
+
+#volumeContainer { display:flex; flex-direction:column; align-items:center; }
+#volumeIcon { width:32px; cursor:pointer; margin-bottom:6px; }
+#volumeSlider { writing-mode:bt-lr; -webkit-appearance:slider-vertical; height:150px; width:10px; cursor:pointer; }
+
+#credit { font-size:12px; color:gray; margin-top:10px; }
+#infoText { font-size:14px; color:#ccc; margin-top:8px; }
+
+#bottomRightSection { position:fixed; bottom:20px; right:20px; display:flex; flex-direction:column; align-items:center; gap:10px; }
+#buggedMessage { color:red; font-size:16px; text-align:center; display:none; padding:40px; width:100%; box-sizing:border-box; }
+#discordBtn { width:32px; cursor:pointer; }
+
+#menuOverlay {
+  position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(13,13,13,0.95);
+  color:white; z-index:1000; display:flex; flex-direction:column;
+}
+#menuOverlay button { min-width:120px; }
+#menuContent { flex:1; overflow:auto; margin:20px; padding:10px; border:2px solid #ff3b3b; border-radius:8px; }
+</style>
+</head>
+<body>
+
+<h1>DBD Flashbang Timing Tool</h1>
+
+<div id="topControls">
+  <button id="darkModeBtn">Dark/Light</button>
+  <button id="loopSegmentBtn">Loop Segment: Off</button>
+  <button id="autoReplayBtn">Auto-Replay: Off</button>
+  <button id="openGuideBtn">Open Guide</button>
+</div>
+
+<div id="menuOverlay">
+  <div style="display:flex; justify-content:center; gap:20px; margin-top:20px;">
+    <button id="tabTraining">Training Tool</button>
+    <button id="tabFAQ">Locker Bang Guide / FAQ</button>
+  </div>
+  <div id="menuContent">
+    <div id="menuTraining">
+      <p style="text-align:center; font-size:18px;">Training tool view is available below. You can practice flashbang timings with all killers.</p>
+    </div>
+    <div id="menuFAQ" style="display:none;">
+      <h2>Locker Bangs: How They Work</h2>
+      <p>Locker bangs are a way of life, an art if you will. They work because the killer is stuck in the animation of pulling out the survivor, and if timed perfectly, they cannot avoid getting blinded. Killers have an immunity to blinds while in this animation, so be careful not to throw the bang too early — otherwise it’ll be null and the killer won’t get blinded.</p>
+      <h2>FAQ</h2>
+      <p><strong>Q: What killers are bugged?</strong><br>
+      A: Currently <span style="color:red;">Demogorgon</span> and <span style="color:red;">Singularity</span> cannot be blinded by locker bangs.</p>
+      <p><strong>Q: Why do my locker bangs never work?</strong><br>
+      A: Coz ur a chud and don’t know timings properly yet — but that’s okay!</p>
+      <p><strong>Q: Timing pointers?</strong><br>
+      A: Watch killer feet when pulling survivor. Count to 4 from red aura and drop just before 4 (1,2,3,3.5,DROP,4).</p>
+    </div>
+  </div>
+  <button id="closeMenu" style="align-self:center; margin:20px; padding:10px 20px;">Close Menu</button>
+</div>
+
+<div class="killer-grid" id="killerGrid"></div>
+
+<div id="videoContainerWrapper">
+  <div id="videoContainer">
+    <video id="videoPlayer"></video>
+    <div id="buggedMessage"></div>
+    <div id="bottomControls">
+      <button id="playPauseBtn">Play</button>
+      <input type="range" id="progressBar" min="0" max="100" value="0">
+      <select id="speedSelect">
+        <option value="0.25">0.25x</option>
+        <option value="0.5">0.5x</option>
+        <option value="0.75">0.75x</option>
+        <option value="1" selected>1x</option>
+        <option value="1.25">1.25x</option>
+        <option value="1.5">1.5x</option>
+      </select>
+    </div>
+    <div id="infoText">For all killer rendering videos, the time to drop the bang is specifically at frame 180</div>
+  </div>
+
+  <div id="volumeContainer">
+    <img id="volumeIcon" src="icons/audio.png" alt="Audio">
+    <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="1">
+  </div>
+</div>
+
+<div id="credit">Made by Father Frank</div>
+<div id="bottomRightSection">
+  <img id="discordBtn" src="icons/discord.png" alt="Discord" title="Join our Discord">
+</div>
+
+<script>
+// --- Killer Data ---
+const killers = [
+  "Trapper","Wraith","Hillbilly","Nurse","Hag","Doctor","Huntress","Cannibal","Freddy","Shape",
+  "Pig","Clown","Spirit","Legion","Plague","GhostFace","Demogorgon","Oni",
+  "DeathSlinger","Wesker","Executioner","Blight","Twins","Trickster","Nemesis","Artist","Dredge","Onryo","Singularity","Twins","Knight","Unknown",
+  "Springtrap","Houndmaster","Chucky","Krasue","Kaneki","Dracula","Skullmerchant","Vecna","Xeno","First"
+];
+const buggedKillers = ["Demogorgon","Singularity"];
+let favorites = new Set();
+let currentKiller=null;
+let autoReplay=false, loopSegment=false, loopStart=0, loopEnd=0;
+
+// --- DOM Elements ---
+const killerGrid=document.getElementById("killerGrid");
+const video=document.getElementById("videoPlayer");
+const playPauseBtn=document.getElementById("playPauseBtn");
+const progressBar=document.getElementById("progressBar");
+const autoReplayBtn=document.getElementById("autoReplayBtn");
+const speedSelect=document.getElementById("speedSelect");
+const loopSegmentBtn=document.getElementById("loopSegmentBtn");
+const darkModeBtn=document.getElementById("darkModeBtn");
+const volumeSlider=document.getElementById("volumeSlider");
+const volumeIcon=document.getElementById("volumeIcon");
+const discordBtn=document.getElementById("discordBtn");
+const buggedMessageDiv=document.getElementById("buggedMessage");
+const videoContainer=document.getElementById("videoContainer");
+const menuOverlay=document.getElementById("menuOverlay");
+const menuTraining=document.getElementById("menuTraining");
+const menuFAQ=document.getElementById("menuFAQ");
+const tabTraining=document.getElementById("tabTraining");
+const tabFAQ=document.getElementById("tabFAQ");
+const closeMenu=document.getElementById("closeMenu");
+const openGuideBtn=document.getElementById("openGuideBtn");
+
+// --- Populate Killers ---
+killers.forEach(killer=>{
+  const card=document.createElement("div");
+  card.className="killer-card";
+  card.title=killer;
+  if(buggedKillers.includes(killer)) card.classList.add("bugged");
+  card.innerHTML=`<img src="thumbnails/${killer}.jpg" alt="${killer}">`;
+  card.addEventListener("click",()=>loadVideo(killer));
+  card.addEventListener("contextmenu",e=>{
+    e.preventDefault();
+    if(favorites.has(killer)) favorites.delete(killer);
+    else favorites.add(killer);
+    updateFavorites();
+  });
+  killerGrid.appendChild(card);
+});
+
+function updateFavorites(){
+  const cards=Array.from(killerGrid.children);
+  cards.sort((a,b)=>{
+    const aFav=favorites.has(a.title);
+    const bFav=favorites.has(b.title);
+    if(aFav && !bFav) return -1;
+    if(!aFav && bFav) return 1;
+    return 0;
+  });
+  cards.forEach(card=>killerGrid.appendChild(card));
+  document.querySelectorAll(".killer-card").forEach(card=>{
+    if(favorites.has(card.title)) card.classList.add("favorite");
+    else card.classList.remove("favorite");
+  });
+}
+
+function loadVideo(killer){
+  currentKiller=killer;
+  highlightActiveKiller();
+  if(buggedKillers.includes(killer)){
+    video.style.display="none";
+    buggedMessageDiv.style.display="block";
+    buggedMessageDiv.textContent="This killer is bugged and cannot be locker bang saved due to dev limitations.";
+  } else {
+    video.style.display="block";
+    buggedMessageDiv.style.display="none";
+    video.src=`videos/${killer}.mp4`;
+    video.load();
+    video.playbackRate=parseFloat(speedSelect.value);
+    video.play().catch(()=>{});
+  }
+}
+
+function highlightActiveKiller(){
+  document.querySelectorAll(".killer-card").forEach(card=>{
+    card.classList.remove("active");
+    if(card.title===currentKiller) card.classList.add("active");
+  });
+}
+
+// --- Video Controls ---
+playPauseBtn.addEventListener("click",()=>{
+  if(video.paused) video.play();
+  else video.pause();
+  playPauseBtn.textContent=video.paused?"Play":"Pause";
+});
+video.addEventListener("timeupdate",()=>{
+  progressBar.value=(video.currentTime/video.duration)*100||0;
+  if(loopSegment && video.currentTime>=loopEnd) video.currentTime=loopStart;
+});
+progressBar.addEventListener("input",()=>video.currentTime=(progressBar.value/100)*video.duration);
+autoReplayBtn.addEventListener("click",()=>{
+  autoReplay=!autoReplay;
+  autoReplayBtn.textContent=autoReplay?"Auto-Replay: On":"Auto-Replay: Off";
+});
+video.addEventListener("ended",()=>{ if(autoReplay) video.play(); playPauseBtn.textContent="Play"; });
+speedSelect.addEventListener("change",()=>video.playbackRate=parseFloat(speedSelect.value));
+loopSegmentBtn.addEventListener("click",()=>{
+  loopSegment=!loopSegment;
+  loopStart=video.currentTime;
+  loopEnd=video.duration;
+  loopSegmentBtn.textContent=loopSegment?"Loop Segment: On":"Loop Segment: Off";
+});
+darkModeBtn.addEventListener("click",()=>document.body.classList.toggle("light"));
+volumeSlider.addEventListener("input",()=>video.volume=volumeSlider.value);
+volumeSlider.addEventListener("mouseenter",()=>volumeSlider.title=Math.round(volumeSlider.value*100)+"%");
+volumeIcon.addEventListener("click",()=>{
+  if(video.muted){ video.muted=false; volumeSlider.value=video.volume; }
+  else { video.muted=true; volumeSlider.value=0; }
+});
+discordBtn.addEventListener("click",()=>window.open("https://discord.gg/Dz8mtBgufd","_blank"));
+document.addEventListener("keydown",e=>{
+  if(e.key===" ") { e.preventDefault(); playPauseBtn.click(); }
+  if(e.key.toLowerCase()==="l") loopSegmentBtn.click();
+  if(e.key.toLowerCase()==="m") volumeIcon.click();
+  if(e.key==="ArrowRight") video.currentTime+=0.5;
+  if(e.key==="ArrowLeft") video.currentTime-=0.5;
+  if(e.key==="+"){ speedSelect.value=Math.min(parseFloat(speedSelect.value)+0.25,1.5); speedSelect.dispatchEvent(new Event('change')); }
+  if(e.key==="-"){ speedSelect.value=Math.max(parseFloat(speedSelect.value)-0.25,0.25); speedSelect.dispatchEvent(new Event('change')); }
+});
+
+// --- Menu Overlay ---
+tabTraining.addEventListener("click",()=>{ menuTraining.style.display="block"; menuFAQ.style.display="none"; });
+tabFAQ.addEventListener("click",()=>{ menuTraining.style.display="none"; menuFAQ.style.display="block"; });
+closeMenu.addEventListener("click",()=>{ menuOverlay.style.display="none"; });
+openGuideBtn.addEventListener("click",()=>{ menuOverlay.style.display="flex"; });
+
+</script>
+
+</body>
+</html>

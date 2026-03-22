@@ -1,0 +1,5 @@
+html website ideas
+add a video and a button you press when think the right time to drop is, 
+based on the video length and a predetermined time frame, it tells you 
+if its inside or outside the desired frame range to hit the save
+
